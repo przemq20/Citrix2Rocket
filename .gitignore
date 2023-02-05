@@ -108,6 +108,7 @@ fabric.properties
 # Simple Build Tool
 # http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
 
+.bsp
 dist/*
 target/
 lib_managed/
@@ -132,3 +133,4 @@ rocketchat/
 # Production Credentials
 src/main/resources/prod.conf
 src/main/resources/prezentacja.conf
+src/main/resources/application.conf
