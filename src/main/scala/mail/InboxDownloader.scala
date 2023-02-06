@@ -9,7 +9,7 @@ import javax.mail.{ Authenticator, Flags, Folder, Message, PasswordAuthenticatio
 
 class InboxDownloader {
   val config = new ConfigReader("citrix2rocket.mail")
-  val snrAddress: String  = config.getVariableString("snr_mail")
+  val snrAddress: String  = config.getVariableString("imap_snr_mail")
   val session:    Session = createSession
   val store:      Store   = session.getStore("imap")
   store.connect()
@@ -19,13 +19,13 @@ class InboxDownloader {
 
     properties.setProperty("mail.store.protocol", "imap")
     //  properties.setProperty("mail.debug", "true");
-    properties.put("mail.imap.host", config.getVariableString("host"))
-    properties.put("mail.imap.port", config.getVariableString("port"))
+    properties.put("mail.imap.host", config.getVariableString("imap_host"))
+    properties.put("mail.imap.port", config.getVariableString("imap_port"))
     properties.put("mail.imap.ssl.enable", "true")
     properties.put("mail.imap.auth", true)
 
-    val username = config.getVariableString("username")
-    val password = config.getVariableString("password")
+    val username = config.getVariableString("imap_username")
+    val password = config.getVariableString("imap_password")
 
     val session: Session = Session.getInstance(
       properties,

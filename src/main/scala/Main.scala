@@ -1,49 +1,60 @@
-import Utils.ConfigReader
 import akka.NotUsed
-import akka.actor.Cancellable
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Flow, RunnableGraph, Sink, Source }
+import akka.stream.scaladsl.{ Flow, Sink, Source }
 import mail.{ InboxDownloader, MessageParser }
+import rocket.Sender
 
 import javax.mail.Message
-import scala.concurrent.duration._
+import scala.concurrent.Future
 
-class Main(interval: Int) {
+class Main() {
   implicit val system:       ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "Citrix2Rocket")
   implicit val materializer: Materializer.type    = Materializer
   val inboxDownloader = new InboxDownloader
   val messageParser   = new MessageParser
+  val rocketSender    = new Sender
 
-  def constructGraph: RunnableGraph[Cancellable] = {
+  def constructGraph: Future[Option[String]] = {
     val downloadMessageFlow: Flow[String, Option[Message], NotUsed] = Flow[String]
       .map(_ => inboxDownloader.getLatestCitrixMessage)
 
     val parseTokenFlow: Flow[Option[Message], Option[String], NotUsed] = Flow[Option[Message]].map(messageParser.getToken)
+    val sendToTheRocketFlow: Flow[Option[String], Option[String], NotUsed] = Flow[Option[String]].map { token =>
+      token.foreach(tok => rocketSender.sendToTheRocket(tok))
+      token
+    }
+    val sink: Sink[Option[String], Future[Option[String]]] = Sink.head[Option[String]]
 
-    val sink: Sink[Option[String], NotUsed] = Flow[Option[String]].to(Sink.foreach {
-      case Some(value) => println(value)
-      case None        =>
-    })
+    val source: Source[String, NotUsed] = Source
+      .single("Tick")
 
-    val source: Source[String, Cancellable] = Source
-      .tick(0.second, interval.second, "tick")
-
-    val graph: RunnableGraph[Cancellable] = source
+    val graph = source
       .via(downloadMessageFlow)
       .via(parseTokenFlow)
-      .to(sink)
+      .via(sendToTheRocketFlow)
 
-    graph
+    graph.runWith(sink)
   }
-
-  def run(): Cancellable = constructGraph.run()
-
 }
 
 object Main extends App {
-  val interval = new ConfigReader("citrix2rocket.mail").getVariableInt("interval")
-  val app      = new Main(interval)
-  app.run()
+  val app = new Main()
+
+  val route = get {
+    onSuccess(app.constructGraph) {
+      case Some(_) => complete("Token has been send to rocket chat.")
+      case None    => complete("There are no unread tokens.")
+    }
+  }
+  implicit val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "Server")
+
+  val host = "0.0.0.0"
+  val port: Int = sys.env.getOrElse("PORT", "8088").toInt
+
+  Http().newServerAt(host, port).bindFlow(route)
+
 }
