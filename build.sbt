@@ -17,6 +17,7 @@ libraryDependencies ++= List(
   "io.spray" %% "spray-json" % "1.3.6",
   "org.jsoup" % "jsoup" % "1.15.3",
   "com.outr" %% "scribe" % "3.10.7",
-  "org.apache.commons" % "commons-email" % "1.5"
-
+  "org.apache.commons" % "commons-email" % "1.5",
+  "org.slf4j" % "slf4j-api" % "2.0.6",
+  "org.slf4j" % "slf4j-simple" % "2.0.6"
 )

@@ -131,6 +131,4 @@ src/main/scala/opsobot/Playground.scala
 rocketchat/
 
 # Production Credentials
-src/main/resources/prod.conf
-src/main/resources/prezentacja.conf
-src/main/resources/application-prod.conf
+src/main/resources
