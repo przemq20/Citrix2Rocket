@@ -12,6 +12,9 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+src/main/resources/application-prod.conf
+src/main/resources/application-local.conf
+
 # Generated files
 .idea/**/contentModel.xml
 
